@@ -1,0 +1,1504 @@
+openapi: 3.0.0
+info:
+  title: LMS Backend API dengan Integrasi AI
+  version: 1.0.0
+  description: |
+    Backend sistem Learning Management System (LMS) dengan integrasi AI ChatGPT dan dukungan Metahuman Unreal Engine.
+    
+    ## Fitur Utama
+    - Autentikasi JWT dengan role siswa dan admin
+    - Struktur pembelajaran hierarkis (Grade → Subject → Chapter → Subchapter)
+    - Interaksi AI mirip ChatGPT untuk pembelajaran
+    - Text-to-Speech dengan ElevenLabs
+    - Quiz Generator otomatis menggunakan AI
+    - Progress Tracking siswa
+    - Integrasi Unreal Engine untuk Metahuman
+    - WebSocket untuk komunikasi real-time
+    
+  contact:
+    name: LMS Backend Support
+    email: support@lms.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development Server
+  - url: https://api.lms.com/api
+    description: Production Server
+
+tags:
+  - name: Authentication
+    description: Endpoint untuk autentikasi dan manajemen user
+  - name: Content Management
+    description: Endpoint untuk manajemen konten pembelajaran
+  - name: AI Interaction
+    description: Endpoint untuk interaksi dengan AI ChatGPT
+  - name: Quiz System
+    description: Endpoint untuk sistem quiz dan assessment
+  - name: Progress Tracking
+    description: Endpoint untuk tracking progress pembelajaran
+  - name: Unreal Engine
+    description: Endpoint untuk integrasi Metahuman Unreal Engine
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token untuk autentikasi. Format: Bearer {token}
+
+  schemas:
+    # User Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID unik user
+        email:
+          type: string
+          format: email
+          description: Email user
+        name:
+          type: string
+          description: Nama lengkap user
+        role:
+          type: string
+          enum: [SISWA, ADMIN]
+          description: Role user dalam sistem
+        createdAt:
+          type: string
+          format: date-time
+          description: Tanggal pembuatan akun
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        email: "siswa1@lms.com"
+        name: "Ahmad Rizki"
+        role: "SISWA"
+        createdAt: "2025-01-01T00:00:00.000Z"
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email untuk registrasi
+        password:
+          type: string
+          minLength: 6
+          description: Password minimal 6 karakter
+        name:
+          type: string
+          description: Nama lengkap user
+        role:
+          type: string
+          enum: [SISWA, ADMIN]
+          description: Role user (opsional, default SISWA)
+      example:
+        email: "siswa@lms.com"
+        password: "password123"
+        name: "Ahmad Rizki"
+        role: "SISWA"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email user
+        password:
+          type: string
+          description: Password user
+      example:
+        email: "siswa1@lms.com"
+        password: "siswa123"
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: JWT token untuk autentikasi
+      example:
+        user:
+          id: "550e8400-e29b-41d4-a716-446655440000"
+          email: "siswa1@lms.com"
+          name: "Ahmad Rizki"
+          role: "SISWA"
+          createdAt: "2025-01-01T00:00:00.000Z"
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    # Content Schemas
+    Grade:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik grade
+        title:
+          type: string
+          description: Nama grade/kelas
+        subjects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subject'
+          description: Daftar mata pelajaran dalam grade
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: "grade-10"
+        title: "Kelas 10 SMA"
+        createdAt: "2025-01-01T00:00:00.000Z"
+        updatedAt: "2025-01-01T00:00:00.000Z"
+
+    Subject:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik subject
+        title:
+          type: string
+          description: Nama mata pelajaran
+        gradeId:
+          type: string
+          description: ID grade yang memiliki subject ini
+        chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Chapter'
+          description: Daftar chapter dalam subject
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: "matematika-10"
+        title: "Matematika"
+        gradeId: "grade-10"
+        createdAt: "2025-01-01T00:00:00.000Z"
+        updatedAt: "2025-01-01T00:00:00.000Z"
+
+    Chapter:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik chapter
+        title:
+          type: string
+          description: Nama chapter
+        subjectId:
+          type: string
+          description: ID subject yang memiliki chapter ini
+        subchapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subchapter'
+          description: Daftar subchapter dalam chapter
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: "aljabar-10"
+        title: "Aljabar"
+        subjectId: "matematika-10"
+        createdAt: "2025-01-01T00:00:00.000Z"
+        updatedAt: "2025-01-01T00:00:00.000Z"
+
+    Subchapter:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik subchapter
+        title:
+          type: string
+          description: Nama subchapter
+        chapterId:
+          type: string
+          description: ID chapter yang memiliki subchapter ini
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: "persamaan-linear"
+        title: "Persamaan Linear"
+        chapterId: "aljabar-10"
+        createdAt: "2025-01-01T00:00:00.000Z"
+        updatedAt: "2025-01-01T00:00:00.000Z"
+
+    CreateGradeRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: Nama grade/kelas
+      example:
+        title: "Kelas 11 SMA"
+
+    CreateSubjectRequest:
+      type: object
+      required:
+        - title
+        - gradeId
+      properties:
+        title:
+          type: string
+          description: Nama mata pelajaran
+        gradeId:
+          type: string
+          description: ID grade
+      example:
+        title: "Fisika"
+        gradeId: "grade-11"
+
+    CreateChapterRequest:
+      type: object
+      required:
+        - title
+        - subjectId
+      properties:
+        title:
+          type: string
+          description: Nama chapter
+        subjectId:
+          type: string
+          description: ID subject
+      example:
+        title: "Mekanika"
+        subjectId: "fisika-11"
+
+    CreateSubchapterRequest:
+      type: object
+      required:
+        - title
+        - chapterId
+      properties:
+        title:
+          type: string
+          description: Nama subchapter
+        chapterId:
+          type: string
+          description: ID chapter
+      example:
+        title: "Gerak Lurus"
+        chapterId: "mekanika-11"
+
+    # AI Schemas
+    AiGeneratedContent:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik konten AI
+        subchapterId:
+          type: string
+          description: ID subchapter
+        content:
+          type: string
+          description: Konten pembelajaran yang digenerate AI
+        audioUrl:
+          type: string
+          nullable: true
+          description: URL audio dari ElevenLabs
+        isInitial:
+          type: boolean
+          description: Apakah ini konten awal subchapter
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: "content-persamaan-linear"
+        subchapterId: "persamaan-linear"
+        content: "Persamaan linear adalah persamaan matematika yang memiliki bentuk ax + b = 0..."
+        audioUrl: "https://example.com/audio/persamaan-linear.mp3"
+        isInitial: true
+        createdAt: "2025-01-01T00:00:00.000Z"
+        updatedAt: "2025-01-01T00:00:00.000Z"
+
+    AskQuestionRequest:
+      type: object
+      required:
+        - question
+      properties:
+        question:
+          type: string
+          description: Pertanyaan siswa kepada AI
+      example:
+        question: "Bagaimana cara menyelesaikan persamaan 2x + 5 = 11?"
+
+    AiChatLog:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik chat log
+        userId:
+          type: string
+          description: ID user
+        subchapterId:
+          type: string
+          description: ID subchapter
+        message:
+          type: string
+          description: Pesan dari user atau AI
+        messageType:
+          type: string
+          enum: [USER, AI]
+          description: Tipe pesan
+        audioUrl:
+          type: string
+          nullable: true
+          description: URL audio jika ada
+        createdAt:
+          type: string
+          format: date-time
+      example:
+        id: "chat-123"
+        userId: "550e8400-e29b-41d4-a716-446655440000"
+        subchapterId: "persamaan-linear"
+        message: "Bagaimana cara menyelesaikan persamaan 2x + 5 = 11?"
+        messageType: "USER"
+        audioUrl: null
+        createdAt: "2025-01-01T00:00:00.000Z"
+
+    # Quiz Schemas
+    Quiz:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik quiz
+        subchapterId:
+          type: string
+          description: ID subchapter
+        title:
+          type: string
+          description: Judul quiz
+        description:
+          type: string
+          nullable: true
+          description: Deskripsi quiz
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuizQuestion'
+          description: Daftar pertanyaan quiz
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: "quiz-persamaan-linear"
+        subchapterId: "persamaan-linear"
+        title: "Quiz: Persamaan Linear"
+        description: "Quiz untuk menguji pemahaman tentang persamaan linear"
+        createdAt: "2025-01-01T00:00:00.000Z"
+        updatedAt: "2025-01-01T00:00:00.000Z"
+
+    QuizQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik pertanyaan
+        question:
+          type: string
+          description: Pertanyaan quiz
+        options:
+          type: array
+          items:
+            type: string
+          description: Pilihan jawaban
+      example:
+        id: "question-1"
+        question: "Nilai x dari persamaan 3x + 7 = 22 adalah..."
+        options: ["A. 5", "B. 4", "C. 6", "D. 3"]
+
+    SubmitQuizRequest:
+      type: object
+      required:
+        - answers
+      properties:
+        answers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Jawaban user (questionId -> answer)
+      example:
+        answers:
+          "question-1": "A"
+          "question-2": "B"
+          "question-3": "A"
+
+    QuizResult:
+      type: object
+      properties:
+        attempt:
+          $ref: '#/components/schemas/QuizAttempt'
+        score:
+          type: number
+          description: Skor dalam persen (0-100)
+        correctAnswers:
+          type: integer
+          description: Jumlah jawaban benar
+        totalQuestions:
+          type: integer
+          description: Total jumlah pertanyaan
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionResult'
+          description: Detail hasil per pertanyaan
+      example:
+        score: 100
+        correctAnswers: 3
+        totalQuestions: 3
+
+    QuizAttempt:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik attempt
+        userId:
+          type: string
+          description: ID user
+        quizId:
+          type: string
+          description: ID quiz
+        answers:
+          type: object
+          description: Jawaban user
+        score:
+          type: number
+          description: Skor yang diperoleh
+        completedAt:
+          type: string
+          format: date-time
+          description: Waktu penyelesaian
+      example:
+        id: "attempt-123"
+        userId: "550e8400-e29b-41d4-a716-446655440000"
+        quizId: "quiz-persamaan-linear"
+        score: 100
+        completedAt: "2025-01-01T00:00:00.000Z"
+
+    QuestionResult:
+      type: object
+      properties:
+        questionId:
+          type: string
+          description: ID pertanyaan
+        question:
+          type: string
+          description: Teks pertanyaan
+        userAnswer:
+          type: string
+          description: Jawaban user
+        correctAnswer:
+          type: string
+          description: Jawaban yang benar
+        isCorrect:
+          type: boolean
+          description: Apakah jawaban benar
+        explanation:
+          type: string
+          description: Penjelasan jawaban
+      example:
+        questionId: "question-1"
+        question: "Nilai x dari persamaan 3x + 7 = 22 adalah..."
+        userAnswer: "A"
+        correctAnswer: "A"
+        isCorrect: true
+        explanation: "Langkah: 3x + 7 = 22 → 3x = 15 → x = 5"
+
+    # Progress Schemas
+    UserProgress:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik progress
+        userId:
+          type: string
+          description: ID user
+        subchapterId:
+          type: string
+          description: ID subchapter
+        status:
+          type: string
+          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED]
+          description: Status progress
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Waktu penyelesaian
+        subchapter:
+          $ref: '#/components/schemas/Subchapter'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: "progress-123"
+        userId: "550e8400-e29b-41d4-a716-446655440000"
+        subchapterId: "persamaan-linear"
+        status: "COMPLETED"
+        completedAt: "2025-01-01T00:00:00.000Z"
+        createdAt: "2025-01-01T00:00:00.000Z"
+        updatedAt: "2025-01-01T00:00:00.000Z"
+
+    ProgressSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total subchapter
+        notStarted:
+          type: integer
+          description: Jumlah yang belum dimulai
+        inProgress:
+          type: integer
+          description: Jumlah yang sedang dikerjakan
+        completed:
+          type: integer
+          description: Jumlah yang sudah selesai
+        completionPercentage:
+          type: integer
+          description: Persentase penyelesaian
+      example:
+        total: 10
+        notStarted: 5
+        inProgress: 2
+        completed: 3
+        completionPercentage: 30
+
+    # Unreal Engine Schemas
+    MetahumanSessionData:
+      type: object
+      properties:
+        subchapter:
+          type: object
+          properties:
+            id:
+              type: string
+            title:
+              type: string
+            subject:
+              type: string
+            grade:
+              type: string
+        content:
+          type: object
+          properties:
+            text:
+              type: string
+            audioUrl:
+              type: string
+        character:
+          type: object
+          properties:
+            name:
+              type: string
+            expression:
+              type: string
+            animation:
+              type: string
+        chatHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              message:
+                type: string
+              audioUrl:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+        metadata:
+          type: object
+          properties:
+            sessionId:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+            duration:
+              type: integer
+      example:
+        subchapter:
+          id: "persamaan-linear"
+          title: "Persamaan Linear"
+          subject: "Matematika"
+          grade: "Kelas 10 SMA"
+        content:
+          text: "Persamaan linear adalah persamaan matematika..."
+          audioUrl: "https://example.com/audio/persamaan-linear.mp3"
+        character:
+          name: "AI Teacher"
+          expression: "friendly"
+          animation: "explaining"
+        metadata:
+          sessionId: "user-123-persamaan-linear-1704067200000"
+          timestamp: "2025-01-01T00:00:00.000Z"
+          duration: 300
+
+    UpdateSessionDurationRequest:
+      type: object
+      required:
+        - duration
+      properties:
+        duration:
+          type: integer
+          minimum: 0
+          description: Durasi sesi dalam detik
+      example:
+        duration: 450
+
+    # Error Schemas
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          description: HTTP status code
+        message:
+          type: string
+          description: Pesan error
+        error:
+          type: string
+          description: Tipe error
+        timestamp:
+          type: string
+          format: date-time
+          description: Waktu error terjadi
+        path:
+          type: string
+          description: Path endpoint yang error
+      example:
+        statusCode: 404
+        message: "Subchapter not found"
+        error: "Not Found"
+        timestamp: "2025-01-01T00:00:00.000Z"
+        path: "/api/content/subchapters/invalid-id"
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          type: array
+          items:
+            type: string
+          description: Daftar pesan validasi error
+        error:
+          type: string
+          example: "Bad Request"
+      example:
+        statusCode: 400
+        message: ["email must be an email", "password must be longer than or equal to 6 characters"]
+        error: "Bad Request"
+
+paths:
+  # Authentication Endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Registrasi user baru
+      description: Mendaftarkan user baru ke dalam sistem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registrasi berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '409':
+          description: Email sudah terdaftar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 409
+                message: "User with this email already exists"
+                error: "Conflict"
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Melakukan autentikasi user dan mendapatkan JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Kredensial tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 401
+                message: "Invalid credentials"
+                error: "Unauthorized"
+
+  # Content Management Endpoints
+  /content/grades:
+    get:
+      tags:
+        - Content Management
+      summary: Dapatkan semua grade
+      description: Mengambil daftar semua grade beserta subject, chapter, dan subchapter
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Daftar grade berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Grade'
+        '401':
+          description: Token tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Content Management
+      summary: Buat grade baru
+      description: Membuat grade baru (hanya admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGradeRequest'
+      responses:
+        '201':
+          description: Grade berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Grade'
+        '400':
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Token tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Akses ditolak (bukan admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /content/grades/{id}:
+    get:
+      tags:
+        - Content Management
+      summary: Dapatkan grade berdasarkan ID
+      description: Mengambil detail grade beserta subject, chapter, dan subchapter
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID grade
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail grade berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Grade'
+        '404':
+          description: Grade tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /content/grades/{gradeId}/subjects:
+    get:
+      tags:
+        - Content Management
+      summary: Dapatkan subject berdasarkan grade
+      description: Mengambil daftar subject dalam grade tertentu
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: gradeId
+          in: path
+          required: true
+          description: ID grade
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Daftar subject berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subject'
+
+  /content/subjects:
+    post:
+      tags:
+        - Content Management
+      summary: Buat subject baru
+      description: Membuat subject baru (hanya admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubjectRequest'
+      responses:
+        '201':
+          description: Subject berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '400':
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: Akses ditolak (bukan admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /content/subjects/{subjectId}/chapters:
+    get:
+      tags:
+        - Content Management
+      summary: Dapatkan chapter berdasarkan subject
+      description: Mengambil daftar chapter dalam subject tertentu
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subjectId
+          in: path
+          required: true
+          description: ID subject
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Daftar chapter berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Chapter'
+
+  /content/chapters:
+    post:
+      tags:
+        - Content Management
+      summary: Buat chapter baru
+      description: Membuat chapter baru (hanya admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChapterRequest'
+      responses:
+        '201':
+          description: Chapter berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chapter'
+        '400':
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: Akses ditolak (bukan admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /content/chapters/{chapterId}/subchapters:
+    get:
+      tags:
+        - Content Management
+      summary: Dapatkan subchapter berdasarkan chapter
+      description: Mengambil daftar subchapter dalam chapter tertentu
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: chapterId
+          in: path
+          required: true
+          description: ID chapter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Daftar subchapter berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subchapter'
+
+  /content/subchapters:
+    post:
+      tags:
+        - Content Management
+      summary: Buat subchapter baru
+      description: Membuat subchapter baru (hanya admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubchapterRequest'
+      responses:
+        '201':
+          description: Subchapter berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subchapter'
+        '400':
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '403':
+          description: Akses ditolak (bukan admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /content/subchapters/{id}:
+    get:
+      tags:
+        - Content Management
+      summary: Dapatkan subchapter berdasarkan ID
+      description: Mengambil detail subchapter beserta informasi chapter, subject, dan grade
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID subchapter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail subchapter berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subchapter'
+        '404':
+          description: Subchapter tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # AI Interaction Endpoints
+  /ai/subchapters/{subchapterId}/content:
+    get:
+      tags:
+        - AI Interaction
+      summary: Dapatkan atau generate konten AI untuk subchapter
+      description: Mengambil konten AI yang sudah ada atau generate konten baru menggunakan GPT
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subchapterId
+          in: path
+          required: true
+          description: ID subchapter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Konten AI berhasil diambil atau digenerate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiGeneratedContent'
+        '404':
+          description: Subchapter tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/subchapters/{subchapterId}/ask:
+    post:
+      tags:
+        - AI Interaction
+      summary: Tanya jawab dengan AI
+      description: Mengajukan pertanyaan kepada AI tentang materi subchapter
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subchapterId
+          in: path
+          required: true
+          description: ID subchapter
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskQuestionRequest'
+      responses:
+        '200':
+          description: Jawaban AI berhasil digenerate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiChatLog'
+        '400':
+          description: Pertanyaan tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '404':
+          description: Subchapter tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/subchapters/{subchapterId}/chat-history:
+    get:
+      tags:
+        - AI Interaction
+      summary: Dapatkan riwayat chat dengan AI
+      description: Mengambil riwayat percakapan user dengan AI untuk subchapter tertentu
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subchapterId
+          in: path
+          required: true
+          description: ID subchapter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Riwayat chat berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AiChatLog'
+
+  # Quiz System Endpoints
+  /quiz/subchapters/{subchapterId}:
+    get:
+      tags:
+        - Quiz System
+      summary: Dapatkan atau generate quiz untuk subchapter
+      description: Mengambil quiz yang sudah ada atau generate quiz baru menggunakan AI
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subchapterId
+          in: path
+          required: true
+          description: ID subchapter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quiz berhasil diambil atau digenerate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '404':
+          description: Subchapter tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /quiz/{quizId}/submit:
+    post:
+      tags:
+        - Quiz System
+      summary: Submit jawaban quiz
+      description: Mengirimkan jawaban quiz dan mendapatkan hasil penilaian
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          description: ID quiz
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitQuizRequest'
+      responses:
+        '200':
+          description: Quiz berhasil disubmit dan dinilai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResult'
+        '400':
+          description: Jawaban tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '404':
+          description: Quiz tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /quiz/attempts:
+    get:
+      tags:
+        - Quiz System
+      summary: Dapatkan riwayat attempt quiz user
+      description: Mengambil riwayat semua attempt quiz yang pernah dikerjakan user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subchapterId
+          in: query
+          required: false
+          description: Filter berdasarkan subchapter tertentu
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Riwayat attempt berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QuizAttempt'
+
+  # Progress Tracking Endpoints
+  /progress:
+    get:
+      tags:
+        - Progress Tracking
+      summary: Dapatkan progress pembelajaran user
+      description: Mengambil progress pembelajaran user untuk semua atau grade tertentu
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: gradeId
+          in: query
+          required: false
+          description: Filter berdasarkan grade tertentu
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Progress berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProgress'
+
+  /progress/summary:
+    get:
+      tags:
+        - Progress Tracking
+      summary: Dapatkan ringkasan progress user
+      description: Mengambil ringkasan statistik progress pembelajaran user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ringkasan progress berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressSummary'
+
+  /progress/subjects/{subjectId}:
+    get:
+      tags:
+        - Progress Tracking
+      summary: Dapatkan progress untuk subject tertentu
+      description: Mengambil progress pembelajaran user untuk subject tertentu
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subjectId
+          in: path
+          required: true
+          description: ID subject
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Progress subject berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    title:
+                      type: string
+                    chapterTitle:
+                      type: string
+                    status:
+                      type: string
+                      enum: [NOT_STARTED, IN_PROGRESS, COMPLETED]
+                    completedAt:
+                      type: string
+                      format: date-time
+                      nullable: true
+
+  # Unreal Engine Integration Endpoints
+  /unreal/sessions/{subchapterId}:
+    get:
+      tags:
+        - Unreal Engine
+      summary: Dapatkan data sesi Metahuman
+      description: Mengambil data yang diperlukan untuk sesi Metahuman di Unreal Engine
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subchapterId
+          in: path
+          required: true
+          description: ID subchapter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data sesi Metahuman berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetahumanSessionData'
+        '404':
+          description: Konten AI tidak ditemukan untuk subchapter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /unreal/sessions/{sessionId}/duration:
+    post:
+      tags:
+        - Unreal Engine
+      summary: Update durasi sesi
+      description: Mengupdate durasi sesi Metahuman setelah selesai
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: ID sesi
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionDurationRequest'
+      responses:
+        '200':
+          description: Durasi sesi berhasil diupdate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Data durasi tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /unreal/sessions:
+    get:
+      tags:
+        - Unreal Engine
+      summary: Dapatkan riwayat sesi Metahuman
+      description: Mengambil riwayat sesi Metahuman user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subchapterId
+          in: query
+          required: false
+          description: Filter berdasarkan subchapter tertentu
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Riwayat sesi berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    userId:
+                      type: string
+                    subchapterId:
+                      type: string
+                    sessionData:
+                      $ref: '#/components/schemas/MetahumanSessionData'
+                    duration:
+                      type: integer
+                      nullable: true
+                    createdAt:
+                      type: string
+                      format: date-time
+                    subchapter:
+                      $ref: '#/components/schemas/Subchapter'
+
+security:
+  - bearerAuth: []
