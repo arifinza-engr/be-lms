@@ -4,9 +4,16 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { DatabaseService } from '@/database/database.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserRepository } from './repositories/user.repository';
+import { RedisService } from '@/common/services/redis.service';
+import { UserEventListener } from '@/common/listeners/user.listeners';
+import { TransactionService } from '@/common/services/transaction.service';
+import { PasswordService } from '@/common/services/password.service';
+import { RateLimitService } from '@/common/services/rate-limit.service';
 
 @Module({
   imports: [
@@ -24,7 +31,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, DatabaseService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    LocalStrategy,
+    DatabaseService,
+    UserRepository,
+    RedisService,
+    UserEventListener,
+    TransactionService,
+    PasswordService,
+    RateLimitService,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

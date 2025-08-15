@@ -16,7 +16,7 @@ afterAll(async () => {
   }).compile();
 
   const database = moduleRef.get<DatabaseService>(DatabaseService);
-  await database.db.$client.end(); // ✅ correct way to disconnect pg.Pool
+  await database.close(); // ✅ method resmi tutup pool
   await moduleRef.close();
 });
 

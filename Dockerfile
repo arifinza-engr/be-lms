@@ -5,7 +5,8 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY prisma ./prisma/
+COPY drizzle ./drizzle/
+COPY drizzle.config.ts ./
 
 # Install dependencies
 RUN npm ci --only=production && npm cache clean --force
@@ -13,8 +14,8 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy source code
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
+# Generate Drizzle migrations
+RUN npm run db:generate
 
 # Build application
 RUN npm run build
@@ -24,10 +25,10 @@ FROM node:20-alpine AS production
 
 # Install system dependencies
 RUN apk add --no-cache \
-    openssl \
-    libssl3 \
-    ca-certificates \
-    && rm -rf /var/cache/apk/*
+  openssl \
+  libssl3 \
+  ca-certificates \
+  && rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
@@ -38,7 +39,8 @@ RUN adduser -S nestjs -u 1001
 # Copy built application
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nestjs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nestjs:nodejs /app/drizzle.config.ts ./
 COPY --from=builder --chown=nestjs:nodejs /app/package*.json ./
 
 # Create uploads directory

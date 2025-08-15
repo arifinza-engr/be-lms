@@ -1,22 +1,24 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { drizzle } from 'drizzle-orm/node-postgres';
+// src/config/database.config.ts
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from '@/database/schema';
 
 @Injectable()
-export class DatabaseService implements OnModuleInit, OnModuleDestroy {
-  public db = drizzle(
-    new Pool({ connectionString: process.env.DATABASE_URL }),
-    { schema },
-  );
+export class DatabaseService implements OnModuleDestroy {
+  private pool: Pool;
+  public db: NodePgDatabase<typeof schema>;
 
-  async onModuleInit() {
-    // Optional: if you want to test connection
-    await this.db.execute('SELECT 1');
+  constructor() {
+    this.pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    this.db = drizzle(this.pool, { schema });
+  }
+
+  async close() {
+    await this.pool.end();
   }
 
   async onModuleDestroy() {
-    // Graceful shutdown
-    await (this.db as any).client.end?.();
+    await this.close();
   }
 }

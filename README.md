@@ -1,361 +1,521 @@
-# LMS Backend - Learning Management System
+# 🎓 LMS Backend - Learning Management System
 
-## 📋 Deskripsi
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-11.x-red.svg)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15.x-blue.svg)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7.x-red.svg)](https://redis.io/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
-LMS Backend adalah sistem backend untuk Learning Management System yang dibangun dengan NestJS dan Drizzle ORM. Sistem ini menyediakan API lengkap untuk platform pembelajaran online dengan integrasi AI ChatGPT dan dukungan Metahuman Unreal Engine.
+> **⚠️ Development Status**: This application is currently in development phase. See [Production Readiness](#-production-readiness) section for deployment guidelines.
 
-## ✨ Fitur Utama
+## 📋 Table of Contents
 
-### 🔐 Autentikasi & Otorisasi
-- JWT-based authentication
-- Role-based access control (SISWA/ADMIN)
-- Password hashing dengan bcrypt
-- Session management
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Quick Start](#-quick-start)
+- [Development](#-development)
+- [API Documentation](#-api-documentation)
+- [Testing](#-testing)
+- [Deployment](#-deployment)
+- [Production Readiness](#-production-readiness)
+- [Contributing](#-contributing)
+- [License](#-license)
 
-### 📚 Manajemen Konten
-- Struktur hierarkis: Grade → Subject → Chapter → Subchapter
-- CRUD operations untuk semua entitas konten
-- Relasi data yang terstruktur
+## 🎯 Overview
 
-### 🤖 Integrasi AI
-- **OpenAI GPT Integration**: Generate konten pembelajaran otomatis
-- **ElevenLabs TTS**: Text-to-speech untuk audio pembelajaran
-- **AI Chat Interface**: Interaksi real-time dengan AI teacher
-- **Quiz Generator**: Generate quiz otomatis berdasarkan materi
+LMS Backend is a comprehensive Learning Management System built with modern technologies. It provides a robust API for online learning platforms with AI integration, real-time communication, and advanced content management capabilities.
 
-### 📊 Progress Tracking
-- User progress tracking per subchapter
-- Status pembelajaran (NOT_STARTED, IN_PROGRESS, COMPLETED)
-- Progress summary dan analytics
-- Achievement system
+### Key Capabilities
 
-### 🎯 Sistem Quiz
-- Quiz generator otomatis menggunakan AI
-- Multiple choice questions
-- Scoring dan feedback system
-- Quiz attempt history
+- **User Management**: Multi-role authentication (Students, Teachers, Admins)
+- **Content Management**: Hierarchical content structure (Grades → Subjects → Chapters → Subchapters)
+- **AI Integration**: OpenAI ChatGPT for content generation and student interaction
+- **Voice Synthesis**: ElevenLabs integration for audio content
+- **Quiz System**: Automated quiz generation and assessment
+- **Progress Tracking**: Comprehensive learning progress monitoring
+- **Real-time Communication**: WebSocket support for live interactions
+- **Unreal Engine Integration**: Metahuman support for immersive learning
 
-### 🎭 Integrasi Unreal Engine
-- Metahuman session management
-- WebSocket untuk real-time communication
-- Session data untuk Unreal Engine integration
+## ✨ Features
 
-### 🔒 Keamanan & Performance
-- Rate limiting dengan Throttler
-- Input validation dan sanitization
+### 🔐 Authentication & Security
+
+- JWT-based authentication with refresh tokens
+- Role-based access control (RBAC)
+- Account lockout protection
+- Rate limiting and throttling
+- Input validation and sanitization
+- Security headers (Helmet.js)
 - CORS configuration
-- Helmet security headers
-- Compression middleware
+
+### 📚 Content Management
+
+- Hierarchical content structure
+- AI-powered content generation
+- Multi-media support
+- Version control for content
+- Content caching and optimization
+
+### 🤖 AI Integration
+
+- OpenAI GPT-4 integration
+- Intelligent content generation
+- Student chat assistance
+- Voice synthesis with ElevenLabs
+- AI-powered quiz generation
+
+### 📊 Analytics & Monitoring
+
+- User progress tracking
+- Learning analytics
+- Performance monitoring
 - Health check endpoints
+- Structured logging
+
+### 🚀 Performance & Scalability
+
+- Redis caching
+- Database query optimization
+- Connection pooling
+- Compression middleware
+- CDN-ready architecture
 
 ## 🛠 Tech Stack
 
-- **Framework**: NestJS 11
-- **Database**: PostgreSQL dengan Drizzle ORM
-- **Authentication**: JWT dengan Passport
-- **WebSocket**: Socket.IO
-- **AI Integration**: OpenAI GPT, ElevenLabs
-- **Validation**: class-validator, class-transformer
-- **Documentation**: Swagger/OpenAPI
-- **Testing**: Jest
-- **Containerization**: Docker
+### Backend Framework
 
-## 📦 Instalasi
+- **NestJS 11.x** - Progressive Node.js framework
+- **TypeScript 5.x** - Type-safe JavaScript
+- **Node.js 20.x** - JavaScript runtime
+
+### Database & ORM
+
+- **PostgreSQL 16.x** - Primary database
+- **Drizzle ORM 0.44.x** - Type-safe ORM
+- **Redis 7.x** - Caching and sessions
+
+### External Services
+
+- **OpenAI API** - AI content generation
+- **ElevenLabs API** - Voice synthesis
+- **Socket.IO** - Real-time communication
+
+### DevOps & Infrastructure
+
+- **Docker & Docker Compose** - Containerization
+- **Nginx** - Reverse proxy and load balancer
+- **Jest** - Testing framework
+- **ESLint & Prettier** - Code quality
+
+## 🏗 Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Nginx         │    │   Backend       │
+│   (React/Vue)   │◄──►│   Reverse Proxy │◄──►│   NestJS API    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │
+                       ┌─────────────────┐             │
+                       │   Redis         │◄────────────┤
+                       │   Cache/Session │             │
+                       └─────────────────┘             │
+                                                        │
+                       ┌─────────────────┐             │
+                       │   PostgreSQL    │◄────────────┤
+                       │   Primary DB    │             │
+                       └─────────────────┘             │
+                                                        │
+                       ┌─────────────────┐             │
+                       │   External APIs │◄────────────┘
+                       │   OpenAI/11Labs │
+                       └─────────────────┘
+```
+
+### Module Structure
+
+```
+src/
+├── auth/           # Authentication & authorization
+├── content/        # Content management
+├── ai/             # AI integration services
+├── quiz/           # Quiz system
+├── progress/       # Progress tracking
+├── unreal/         # Unreal Engine integration
+├── health/         # Health checks
+├── common/         # Shared utilities
+├── database/       # Database configuration
+└── config/         # Application configuration
+```
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js >= 20.0.0
-- npm >= 10.0.0
-- PostgreSQL >= 14
-- Redis (optional, untuk caching)
 
-### 1. Clone Repository
+- Node.js 20.x or higher
+- npm 10.x or higher
+- PostgreSQL 16.x
+- Redis 7.x
+- Docker & Docker Compose (optional)
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd lms-backend
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Environment setup**
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. **Database setup**
+
+   ```bash
+   # Generate database schema
+   npm run db:generate
+
+   # Push schema to database
+   npm run db:push
+
+   # Seed initial data (optional)
+   npm run db:seed
+   ```
+
+5. **Start development server**
+
+   ```bash
+   npm run start:dev
+   ```
+
+### Using Docker
+
+1. **Start with Docker Compose**
+
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **View logs**
+
+   ```bash
+   docker-compose logs -f app
+   ```
+
+## 💻 Development
+
+### Available Scripts
+
 ```bash
-git clone <repository-url>
-cd lms-backend
-```
+# Development
+npm run start:dev      # Start development server with hot reload
+npm run start:debug    # Start with debug mode
 
-### 2. Install Dependencies
-```bash
-npm install
-```
+# Building
+npm run build          # Build for production
+npm run start:prod     # Start production server
 
-### 3. Environment Configuration
-```bash
-cp .env.example .env
-```
-
-Edit file `.env` dengan konfigurasi yang sesuai:
-
-```env
 # Database
-DATABASE_URL="postgresql://username:password@localhost:5432/lms_db"
+npm run db:generate    # Generate database migrations
+npm run db:push        # Apply migrations to database
+npm run db:studio      # Open Drizzle Studio
+npm run db:seed        # Seed database with initial data
+
+# Testing
+npm run test           # Run unit tests
+npm run test:watch     # Run tests in watch mode
+npm run test:cov       # Run tests with coverage
+npm run test:e2e       # Run end-to-end tests
+
+# Code Quality
+npm run lint           # Run ESLint
+npm run format         # Format code with Prettier
+```
+
+### Environment Variables
+
+Key environment variables you need to configure:
+
+```bash
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/lms_db"
 
 # JWT Configuration
-JWT_SECRET="your-super-secret-jwt-key-change-in-production"
-JWT_EXPIRES_IN="7d"
+JWT_SECRET="your-super-secret-jwt-key-min-32-chars"
+JWT_REFRESH_SECRET="your-super-secret-refresh-jwt-key-min-32-chars"
 
-# OpenAI Configuration
+# External APIs
 OPENAI_API_KEY="your-openai-api-key"
-
-# ElevenLabs Configuration (Optional)
 ELEVENLABS_API_KEY="your-elevenlabs-api-key"
-ELEVENLABS_VOICE_ID="your-voice-id"
 
-# Server Configuration
+# Redis
+REDIS_URL="redis://localhost:6379"
+
+# Server
 PORT=3000
 NODE_ENV="development"
 ```
 
-### 4. Database Setup
-```bash
-# Generate database schema
-npm run db:generate
-
-# Push schema to database
-npm run db:push
-
-# Seed database dengan data sample
-npx tsx src/database/seed.ts
-```
-
-### 5. Start Application
-```bash
-# Development mode
-npm run start:dev
-
-# Production mode
-npm run build
-npm run start:prod
-```
-
-## 🚀 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-
-### Content Management
-- `GET /api/content/grades` - Get all grades
-- `GET /api/content/grades/:id` - Get grade by ID
-- `POST /api/content/grades` - Create grade (Admin only)
-- `GET /api/content/subjects/:subjectId/chapters` - Get chapters by subject
-- `POST /api/content/chapters` - Create chapter (Admin only)
-- `GET /api/content/subchapters/:id` - Get subchapter details
-
-### AI Interaction
-- `GET /api/ai/subchapters/:id/content` - Get/generate AI content
-- `POST /api/ai/subchapters/:id/ask` - Ask question to AI
-- `GET /api/ai/subchapters/:id/chat-history` - Get chat history
-
-### Quiz System
-- `GET /api/quiz/subchapters/:id` - Get/generate quiz
-- `POST /api/quiz/:id/submit` - Submit quiz answers
-- `GET /api/quiz/attempts` - Get user quiz attempts
-
-### Progress Tracking
-- `GET /api/progress` - Get user progress
-- `GET /api/progress/summary` - Get progress summary
-- `GET /api/progress/subjects/:id` - Get subject progress
-
-### Unreal Engine Integration
-- `GET /api/unreal/sessions/:id` - Get Metahuman session data
-- `POST /api/unreal/sessions/:id/duration` - Update session duration
-- `GET /api/unreal/sessions` - Get session history
-
-### Health Check
-- `GET /api/health` - Application health check
-- `GET /api/health/ready` - Readiness probe
-- `GET /api/health/live` - Liveness probe
+See `.env.example` for complete configuration options.
 
 ## 📖 API Documentation
 
-Dokumentasi API lengkap tersedia di:
-- **Swagger UI**: `http://localhost:3000/docs` (development)
-- **API Reference**: Lihat file `API.md` untuk dokumentasi detail
+### Endpoints Overview
 
-## 🗄 Database Schema
+- **Authentication**: `/api/auth/*`
+- **Content Management**: `/api/content/*`
+- **AI Services**: `/api/ai/*`
+- **Quiz System**: `/api/quiz/*`
+- **Progress Tracking**: `/api/progress/*`
+- **Health Checks**: `/api/health`
 
-### Entitas Utama
+### Swagger Documentation
 
-#### Users
-- `id` (UUID, Primary Key)
-- `email` (String, Unique)
-- `password` (String, Hashed)
-- `name` (String)
-- `role` (Enum: SISWA, ADMIN)
+When running in development mode, API documentation is available at:
 
-#### Content Hierarchy
-- **Grades**: Tingkat kelas (e.g., Kelas 10 SMA)
-- **Subjects**: Mata pelajaran (e.g., Matematika, Fisika)
-- **Chapters**: Bab dalam mata pelajaran
-- **Subchapters**: Sub-bab dalam chapter
+```
+http://localhost:3000/docs
+```
 
-#### AI & Learning
-- **AI Generated Content**: Konten pembelajaran yang digenerate AI
-- **AI Chat Logs**: Riwayat percakapan dengan AI
-- **User Progress**: Progress pembelajaran user
-- **Quizzes & Questions**: Sistem quiz dan pertanyaan
-- **Quiz Attempts**: Riwayat attempt quiz user
+### Authentication
 
-#### Unreal Engine
-- **Metahuman Sessions**: Data sesi Metahuman
+Most endpoints require authentication. Include the JWT token in the Authorization header:
+
+```bash
+Authorization: Bearer <your-jwt-token>
+```
+
+### Example API Calls
+
+```bash
+# Register a new user
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePassword123!",
+    "name": "John Doe",
+    "role": "SISWA"
+  }'
+
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePassword123!"
+  }'
+
+# Get content
+curl -X GET http://localhost:3000/api/content/grades \
+  -H "Authorization: Bearer <your-token>"
+```
 
 ## 🧪 Testing
+
+### Current Test Coverage
+
+```
+Statements   : 13.23% (Target: 80%)
+Branches     : 11.15% (Target: 80%)
+Functions    : 13.4%  (Target: 80%)
+Lines        : 12.96% (Target: 80%)
+```
+
+> ⚠️ **Warning**: Test coverage is currently below production standards. See [target-prod.md](./target-prod.md) for improvement roadmap.
+
+### Running Tests
 
 ```bash
 # Unit tests
 npm run test
 
+# Watch mode
+npm run test:watch
+
+# Coverage report
+npm run test:cov
+
 # E2E tests
 npm run test:e2e
 
-# Test coverage
-npm run test:cov
-
-# Watch mode
-npm run test:watch
+# Specific test file
+npm run test -- auth.service.spec.ts
 ```
 
-## 🐳 Docker Deployment
+### Test Structure
 
-### Development
-```bash
-docker-compose up -d
+```
+test/
+├── auth.e2e-spec.ts       # Authentication E2E tests
+├── app.e2e-spec.ts        # Application E2E tests
+├── setup.ts               # Test setup configuration
+└── jest-e2e.json          # E2E Jest configuration
+
+src/
+├── **/*.spec.ts           # Unit tests
+└── **/*.integration.spec.ts # Integration tests
 ```
 
-### Production
+## 🚀 Deployment
+
+### Production Build
+
 ```bash
+# Build the application
+npm run build
+
+# Start production server
+npm run start:prod
+```
+
+### Docker Deployment
+
+```bash
+# Build production image
+docker build -t lms-backend:latest .
+
+# Run container
+docker run -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e DATABASE_URL=<your-db-url> \
+  lms-backend:latest
+```
+
+### Docker Compose (Recommended)
+
+```bash
+# Production deployment
+docker-compose -f docker-compose.yml up -d
+
+# With custom environment
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-## 📊 Monitoring & Logging
+### Environment Configuration
 
-### Health Checks
-- Application health: `/api/health`
-- Database connectivity: `/api/health/ready`
-- Liveness probe: `/api/health/live`
+For production deployment, ensure you have:
 
-### Logging
-- Structured JSON logging
-- Request/response logging
-- Error tracking
-- Performance monitoring
+1. **Strong secrets** (minimum 32 characters)
+2. **SSL/TLS certificates** configured
+3. **Database connection pooling** enabled
+4. **Redis clustering** for high availability
+5. **Monitoring and logging** configured
 
-### Metrics
-- Response times
-- Error rates
-- Database query performance
-- API usage statistics
+## ⚠️ Production Readiness
 
-## 🔧 Development
+**Current Status**: 🟡 **Development Phase**
 
-### Database Operations
-```bash
-# Generate new migration
-npm run db:generate
+**Production Readiness Score**: **6.5/10**
 
-# Apply migrations
-npm run db:push
+### Critical Issues to Address
 
-# Open database studio
-npm run db:studio
+1. **Test Coverage**: Currently 13.23% (Target: 80%+)
+2. **Security**: Hardcoded secrets in development
+3. **Monitoring**: Limited production monitoring
+4. **Documentation**: API documentation incomplete
 
-# Reset database
-npm run db:drop
-```
+### Before Production Deployment
 
-### Code Quality
-```bash
-# Linting
-npm run lint
+Please review [target-prod.md](./target-prod.md) for:
 
-# Formatting
-npm run format
+- ✅ Production readiness checklist
+- 🔧 Critical fixes required
+- 📋 Deployment roadmap
+- 🎯 Performance targets
 
-# Type checking
-npx tsc --noEmit
-```
-
-## 🚀 Production Deployment
-
-### Environment Variables
-Pastikan semua environment variables production sudah dikonfigurasi:
-
-```env
-NODE_ENV=production
-DATABASE_URL=<production-database-url>
-JWT_SECRET=<strong-production-secret>
-OPENAI_API_KEY=<production-openai-key>
-CORS_ORIGIN=<frontend-domain>
-```
-
-### Performance Optimization
-- Enable compression
-- Configure rate limiting
-- Set up database connection pooling
-- Enable caching (Redis)
-- Configure CDN untuk static assets
-
-### Security Checklist
-- [ ] Strong JWT secret
-- [ ] HTTPS enabled
-- [ ] Rate limiting configured
-- [ ] Input validation enabled
-- [ ] CORS properly configured
-- [ ] Security headers enabled
-- [ ] Database credentials secured
-- [ ] API keys secured
+**Recommendation**: Do not deploy to production until critical issues are resolved.
 
 ## 🤝 Contributing
 
-1. Fork repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+### Development Workflow
 
-### Development Guidelines
-- Follow TypeScript best practices
-- Write unit tests untuk new features
-- Update documentation
-- Follow conventional commit messages
-- Ensure code passes linting
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. **Make your changes**
+4. **Add tests** for new functionality
+5. **Run tests and linting**
+   ```bash
+   npm run test
+   npm run lint
+   ```
+6. **Commit your changes**
+   ```bash
+   git commit -m "feat: add your feature description"
+   ```
+7. **Push to your fork**
+8. **Create a Pull Request**
 
-## 📝 License
+### Code Standards
+
+- **TypeScript**: Strict mode enabled
+- **ESLint**: Airbnb configuration
+- **Prettier**: Code formatting
+- **Conventional Commits**: Commit message format
+- **Test Coverage**: Minimum 80% for new code
+
+### Pull Request Guidelines
+
+- Include tests for new features
+- Update documentation as needed
+- Ensure all CI checks pass
+- Add detailed description of changes
+- Reference related issues
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👥 Team
+## 🆘 Support
 
-- **Backend Developer**: [Your Name]
-- **AI Integration**: [AI Specialist]
-- **DevOps**: [DevOps Engineer]
+### Getting Help
 
-## 📞 Support
+- **Documentation**: Check this README and [target-prod.md](./target-prod.md)
+- **Issues**: Create an issue on GitHub
+- **Discussions**: Use GitHub Discussions for questions
 
-Untuk support dan pertanyaan:
-- Email: support@lms.com
-- Documentation: [Link to docs]
-- Issues: [GitHub Issues]
+### Common Issues
 
-## 🔄 Changelog
+1. **Database Connection**: Ensure PostgreSQL is running and credentials are correct
+2. **Redis Connection**: Verify Redis server is accessible
+3. **Environment Variables**: Check all required variables are set
+4. **Port Conflicts**: Ensure ports 3000, 5432, 6379 are available
 
-### v1.0.0 (Current)
-- ✅ Initial release
-- ✅ Complete API implementation
-- ✅ AI integration (OpenAI + ElevenLabs)
-- ✅ WebSocket support
-- ✅ Docker containerization
-- ✅ Comprehensive documentation
+### Health Checks
 
-### Roadmap
-- [ ] Redis caching implementation
-- [ ] Advanced analytics dashboard
-- [ ] Mobile app API optimization
-- [ ] Multi-language support
-- [ ] Advanced AI features
-- [ ] Performance monitoring dashboard
+Monitor application health at:
+
+- **API Health**: `GET /api/health`
+- **Database**: `GET /api/health/database`
+- **Redis**: `GET /api/health/redis`
+- **External APIs**: `GET /api/health/external`
 
 ---
 
-**Happy Learning! 🎓**
+## 📊 Project Status
+
+- **Version**: 1.0.0
+- **Status**: Development
+- **Last Updated**: December 2024
+- **Node.js**: 20.x
+- **NestJS**: 11.x
+
+---
+
+**Made with ❤️ for modern learning experiences**

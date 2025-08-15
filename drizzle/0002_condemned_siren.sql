@@ -1,0 +1,1 @@
+ALTER TABLE "quizzes" ADD CONSTRAINT "quizzes_subchapter_title_unique" UNIQUE("subchapterId","title");

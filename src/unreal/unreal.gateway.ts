@@ -5,24 +5,49 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
+import { Logger, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { UnrealService } from './unreal.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+    credentials: true,
   },
+  namespace: '/unreal',
 })
-export class UnrealGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private readonly unrealService: UnrealService) {}
+export class UnrealGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
+  private readonly logger = new Logger(UnrealGateway.name);
+  private server: Server;
+
+  constructor(
+    private readonly unrealService: UnrealService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  afterInit(server: Server) {
+    this.server = server;
+    this.logger.log('Unreal WebSocket Gateway initialized');
+  }
 
   handleConnection(client: Socket) {
-    console.log(`Unreal client connected: ${client.id}`);
+    this.logger.log(`Unreal client connected: ${client.id}`);
+
+    // Optional: Add authentication check here
+    // const token = client.handshake.auth.token;
+    // if (!token) {
+    //   client.disconnect();
+    //   return;
+    // }
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Unreal client disconnected: ${client.id}`);
+    this.logger.log(`Unreal client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('joinSession')
@@ -53,7 +78,10 @@ export class UnrealGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { sessionId: string; duration: number },
     @ConnectedSocket() client: Socket,
   ) {
-    await this.unrealService.updateSessionDuration(data.sessionId, data.duration);
+    await this.unrealService.updateSessionDuration(
+      data.sessionId,
+      data.duration,
+    );
     client.emit('sessionCompleted', { success: true });
   }
 }

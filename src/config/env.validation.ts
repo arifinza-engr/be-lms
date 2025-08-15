@@ -9,6 +9,7 @@ import {
   validateSync,
   Min,
   Max,
+  Matches,
 } from 'class-validator';
 
 export enum Environment {
@@ -32,9 +33,16 @@ class EnvironmentVariables {
   @IsString()
   readonly JWT_SECRET: string;
 
+  @IsString()
+  readonly JWT_REFRESH_SECRET: string;
+
   @IsOptional()
   @IsString()
-  readonly JWT_EXPIRES_IN?: string = '7d';
+  readonly JWT_EXPIRES_IN?: string = '15m';
+
+  @IsOptional()
+  @IsString()
+  readonly JWT_REFRESH_EXPIRES_IN?: string = '7d';
 
   @IsOptional()
   @IsString()
@@ -67,7 +75,11 @@ class EnvironmentVariables {
   readonly LOG_LEVEL?: string = 'info';
 
   @IsOptional()
-  @IsUrl()
+  @IsString()
+  @Matches(/^redis:\/\/.*/, {
+    message:
+      'REDIS_URL must be a valid Redis connection string starting with redis://',
+  })
   readonly REDIS_URL?: string;
 
   @IsOptional()
