@@ -7,15 +7,14 @@ import {
   IsEnum,
 } from 'class-validator';
 import { UserRole } from '@/types/enums';
-import { IsStrongPassword } from '@/common/validators/password.validator';
+import { IsStrongPasswordStandalone } from '@/common/validators/password-standalone.validator';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Please provide a valid email address' })
   email: string;
 
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @IsStrongPassword()
+  @IsStrongPasswordStandalone()
   password: string;
 
   @IsString()

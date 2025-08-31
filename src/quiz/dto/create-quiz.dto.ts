@@ -11,7 +11,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class CreateQuizQuestionDto {
+export class QuizQuestionDto {
   @ApiProperty({
     description: 'Question text',
     example: 'Nilai x dari persamaan 3x + 7 = 22 adalah...',
@@ -108,11 +108,11 @@ export class CreateQuizDto {
 
   @ApiPropertyOptional({
     description: 'Quiz questions',
-    type: [CreateQuizQuestionDto],
+    type: [QuizQuestionDto],
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CreateQuizQuestionDto)
-  questions?: CreateQuizQuestionDto[];
+  @Type(() => QuizQuestionDto)
+  questions?: QuizQuestionDto[];
 }

@@ -47,11 +47,15 @@ export class SecurityConfigService {
 
   getSecurityConfig(): SecurityConfig {
     const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
-    const frontendUrl = this.configService.get<string>(
-      'FRONTEND_URL',
-      'http://localhost:3000',
-    );
     const isDevelopment = nodeEnv === 'development';
+
+    // 🔑 Ambil daftar origin dari .env
+    const corsEnv = this.configService.get<string>('CORS_ORIGIN', '');
+    const frontendEnv = this.configService.get<string>('FRONTEND_URL', '');
+    const origins = (corsEnv || frontendEnv || 'http://localhost:3000')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
 
     return {
       helmet: {
@@ -78,7 +82,7 @@ export class SecurityConfigService {
               "'self'",
               'https://api.openai.com',
               'https://api.elevenlabs.io',
-              frontendUrl,
+              ...origins,
               ...(isDevelopment ? ['ws:', 'wss:'] : ['wss:']),
             ],
             frameSrc: ["'none'"],
@@ -111,7 +115,7 @@ export class SecurityConfigService {
         xssFilter: true,
       },
       cors: {
-        origin: this.getAllowedOrigins(),
+        origin: origins,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: [
           'Origin',
@@ -128,7 +132,7 @@ export class SecurityConfigService {
       },
       rateLimit: {
         windowMs: 15 * 60 * 1000, // 15 minutes
-        max: isDevelopment ? 1000 : 100, // Limit each IP to 100 requests per windowMs in production
+        max: isDevelopment ? 1000 : 100,
         message: {
           error: 'Too many requests from this IP, please try again later',
           statusCode: 429,

@@ -121,10 +121,13 @@ export class SanitizationService {
 
     return input
       .replace(/[';-]/g, '') // Remove SQL comment and statement terminators
+      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove SQL block comments
+      .replace(/--.*$/gm, '') // Remove SQL line comments
       .replace(
-        /\b(union|select|insert|update|delete|drop|create|alter|exec|execute)\b/gi,
+        /\b(union|select|insert|update|delete|drop|create|alter|exec|execute|script|javascript|vbscript|onload|onerror)\b/gi,
         '',
-      ) // Remove SQL keywords
+      ) // Remove SQL keywords and script-related terms
+      .replace(/[<>]/g, '') // Remove angle brackets
       .trim()
       .substring(0, 1000);
   }

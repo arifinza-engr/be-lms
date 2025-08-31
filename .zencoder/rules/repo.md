@@ -7,46 +7,49 @@ alwaysApply: true
 
 ## Summary
 
-LMS Backend is a Learning Management System built with NestJS and Drizzle ORM. It provides a comprehensive API for online learning platforms with AI integration (OpenAI ChatGPT) and Unreal Engine Metahuman support. The system includes authentication, content management, progress tracking, quiz systems, and real-time communication features.
+A comprehensive Learning Management System backend built with NestJS, providing robust API for online learning platforms with AI integration, real-time communication, and advanced content management capabilities.
 
 ## Structure
 
-- **src/**: Main application code
-  - **ai/**: AI integration services (OpenAI, ElevenLabs)
-  - **auth/**: Authentication and authorization
-  - **content/**: Content management (grades, subjects, chapters)
+- **src/**: Main application source code organized by modules
+  - **auth/**: Authentication & authorization
+  - **content/**: Content management
+  - **ai/**: AI integration services
+  - **quiz/**: Quiz system
+  - **progress/**: Progress tracking
+  - **unreal/**: Unreal Engine integration
   - **database/**: Database configuration and schema
-  - **quiz/**: Quiz generation and management
-  - **progress/**: User progress tracking
-  - **unreal/**: Unreal Engine integration with WebSockets
 - **test/**: End-to-end tests
 - **drizzle/**: Database migrations
+- **uploads/**: Storage for uploaded files
 
 ## Language & Runtime
 
 **Language**: TypeScript
-**Version**: Node.js >= 20.0.0, npm >= 10.0.0
-**Framework**: NestJS 11
+**Version**: TypeScript 5.x
+**Runtime**: Node.js 20.x
 **Build System**: NestJS CLI
-**Package Manager**: npm
+**Package Manager**: npm 10.x+
 
 ## Dependencies
 
 **Main Dependencies**:
 
-- @nestjs/\* (core, common, config, jwt, passport)
-- drizzle-orm: PostgreSQL ORM
-- openai: AI integration
-- socket.io: WebSocket support
-- bcryptjs: Password hashing
-- class-validator/transformer: Input validation
+- NestJS 11.x (Core, Common, Config, JWT, Passport)
+- Drizzle ORM 0.44.x
+- PostgreSQL (via pg 8.x)
+- Redis 5.x
+- OpenAI 5.x
+- Socket.IO 4.x
+- Multer 2.x (File uploads)
+- Swagger/OpenAPI (API documentation)
 
 **Development Dependencies**:
 
-- jest: Testing framework
-- typescript: Type checking
-- eslint/prettier: Code quality
-- drizzle-kit: Database migration tools
+- Jest 30.x (Testing)
+- ESLint 9.x & Prettier 3.x
+- ts-jest & ts-node
+- Drizzle Kit 0.31.x
 
 ## Build & Installation
 
@@ -54,39 +57,59 @@ LMS Backend is a Learning Management System built with NestJS and Drizzle ORM. I
 # Install dependencies
 npm install
 
-# Development mode
+# Generate database schema
+npm run db:generate
+
+# Push schema to database
+npm run db:push
+
+# Seed initial data (optional)
+npm run db:seed
+
+# Development server
 npm run start:dev
 
 # Production build
 npm run build
 npm run start:prod
-
-# Database operations
-npm run db:generate  # Generate migrations
-npm run db:push      # Apply migrations
 ```
 
 ## Docker
 
 **Dockerfile**: Multi-stage build with Node.js 20 Alpine
-**Compose**: docker-compose.yml with PostgreSQL, Redis, and Nginx
-**Configuration**: Production-ready with health checks and non-root user
-**Run Command**:
+**Image Configuration**:
 
-```bash
-docker-compose up -d
-```
+- Production-optimized with security hardening
+- Non-root user (nestjs:nodejs)
+- Health check configured
+- Exposed port: 3000
+
+**Docker Compose**:
+
+- Services: app, postgres, redis, nginx
+- Postgres 15 Alpine for database
+- Redis 7 Alpine for caching
+- Nginx as reverse proxy
 
 ## Testing
 
 **Framework**: Jest
-**Test Location**: Unit tests in src/**/\*.spec.ts, E2E tests in test/
-**Naming Convention**: _.spec.ts for unit tests, _.e2e-spec.ts for E2E
-**Configuration**: jest.config.js with coverage thresholds
-**Run Command\*\*:
+**Test Location**:
+
+- Unit tests: src/\*_/_.spec.ts
+- Integration tests: src/\*_/_.integration.spec.ts
+- E2E tests: test/\*.e2e-spec.ts
+
+**Configuration**: jest.config.js with 80% coverage threshold
+**Run Command**:
 
 ```bash
-npm run test        # Unit tests
-npm run test:e2e    # E2E tests
-npm run test:cov    # Coverage report
+# Unit tests
+npm run test
+
+# Coverage report
+npm run test:cov
+
+# E2E tests
+npm run test:e2e
 ```

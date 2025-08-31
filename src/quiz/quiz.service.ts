@@ -130,6 +130,7 @@ export class QuizService {
         maxScore,
         percentage,
         passed: percentage >= 70,
+        timeSpent: submitQuizDto.timeSpent,
       })
       .returning();
 
@@ -185,6 +186,11 @@ export class QuizService {
   }
 
   async getUserQuizAttempts(userId: string, subchapterId?: string) {
+    console.log('🔍 getUserQuizAttempts called with:', {
+      userId,
+      subchapterId,
+    });
+
     const attempts = await this.database.db.query.quizAttempts.findMany({
       where: eq(quizAttempts.userId, userId),
       with: {
@@ -205,10 +211,30 @@ export class QuizService {
       orderBy: (quizAttempts, { desc }) => [desc(quizAttempts.completedAt)],
     });
 
+    console.log('📊 Total attempts found:', attempts.length);
+    console.log(
+      '📋 Attempts details:',
+      attempts.map((a) => ({
+        id: a.id,
+        quizId: a.quizId,
+        subchapterId: a.quiz?.subchapterId,
+        subchapterTitle: a.quiz?.subchapter?.title,
+        score: a.score,
+        completedAt: a.completedAt,
+      })),
+    );
+
     if (subchapterId) {
-      return attempts.filter(
+      const filtered = attempts.filter(
         (attempt) => attempt.quiz.subchapterId === subchapterId,
       );
+      console.log(
+        '🎯 Filtered attempts for subchapterId:',
+        subchapterId,
+        'count:',
+        filtered.length,
+      );
+      return filtered;
     }
 
     return attempts;

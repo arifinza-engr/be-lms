@@ -25,7 +25,7 @@ import { MonitoringService } from '@/common/services/monitoring.service';
 @ApiTags('Monitoring')
 @Controller('monitoring')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 export class MonitoringController {
   constructor(private readonly monitoringService: MonitoringService) {}
 

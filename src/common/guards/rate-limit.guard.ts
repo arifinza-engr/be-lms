@@ -71,8 +71,12 @@ export class RateLimitGuard implements CanActivate {
       const message =
         options.message || 'Too many requests, please try again later';
 
+      // FIXED: Use result.retryAfter if available, otherwise calculate from resetTime
+      const retryAfter =
+        result.retryAfter || Math.ceil((result.resetTime - Date.now()) / 1000);
+
       this.logger.warn(
-        `Rate limit exceeded for ${key} on ${request.method} ${request.url}`,
+        `Rate limit exceeded for ${key} on ${request.method} ${request.url}, retryAfter: ${retryAfter}s`,
       );
 
       throw new HttpException(
@@ -80,7 +84,7 @@ export class RateLimitGuard implements CanActivate {
           statusCode: HttpStatus.TOO_MANY_REQUESTS,
           message,
           error: 'Too Many Requests',
-          retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
+          retryAfter: Math.max(0, retryAfter), // Ensure non-negative
         },
         HttpStatus.TOO_MANY_REQUESTS,
       );
@@ -134,10 +138,10 @@ export class RateLimitGuard implements CanActivate {
     response.setHeader('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000));
 
     if (!result.allowed) {
-      response.setHeader(
-        'Retry-After',
-        Math.ceil((result.resetTime - Date.now()) / 1000),
-      );
+      // FIXED: Use result.retryAfter if available, otherwise calculate from resetTime
+      const retryAfter =
+        result.retryAfter || Math.ceil((result.resetTime - Date.now()) / 1000);
+      response.setHeader('Retry-After', Math.max(0, retryAfter));
     }
   }
 }

@@ -256,9 +256,11 @@ describe('RateLimitService', () => {
 
     it('should clean up expired blocks', async () => {
       const expiredTime = Date.now() - 10000;
+
+      // Mock keys() to return different results for each pattern
       redisService.keys
-        .mockResolvedValueOnce(['rate_limit:block:key1'])
-        .mockResolvedValueOnce([]);
+        .mockResolvedValueOnce(['rate_limit:requests:key1']) // First call for requests pattern
+        .mockResolvedValueOnce(['rate_limit:block:key1']); // Second call for block pattern
 
       redisService.get.mockResolvedValue(expiredTime.toString());
       redisService.del.mockResolvedValue(1);
@@ -269,9 +271,10 @@ describe('RateLimitService', () => {
     });
 
     it('should clean up empty request sets', async () => {
+      // Mock keys() to return different results for each pattern
       redisService.keys
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(['rate_limit:requests:key1']);
+        .mockResolvedValueOnce(['rate_limit:requests:key1']) // First call for requests pattern
+        .mockResolvedValueOnce([]); // Second call for block pattern
 
       redisService.zcard.mockResolvedValue(0);
       redisService.del.mockResolvedValue(1);
@@ -291,7 +294,8 @@ describe('RateLimitService', () => {
   describe('rate limit configurations', () => {
     it('should have correct auth configuration', async () => {
       redisService.get.mockResolvedValue(null);
-      redisService.zcard.mockResolvedValue(6); // Over auth limit (5)
+      redisService.zremrangebyscore.mockResolvedValue(0);
+      redisService.zcard.mockResolvedValue(11); // Over auth limit (10)
       redisService.set.mockResolvedValue('OK');
 
       const result = await service.checkRateLimit('test', 'auth');

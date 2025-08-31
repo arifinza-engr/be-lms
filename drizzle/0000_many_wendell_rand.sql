@@ -19,7 +19,8 @@ CREATE TABLE "ai_generated_content" (
 	"isInitial" boolean DEFAULT true NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
-	"updatedAt" timestamp DEFAULT now() NOT NULL
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "ai_content_subchapter_initial_unique" UNIQUE("subchapterId","isInitial")
 );
 --> statement-breakpoint
 CREATE TABLE "chapters" (
@@ -30,7 +31,8 @@ CREATE TABLE "chapters" (
 	"subjectId" uuid NOT NULL,
 	"isActive" boolean DEFAULT true NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
-	"updatedAt" timestamp DEFAULT now() NOT NULL
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "chapters_title_subject_unique" UNIQUE("title","subjectId")
 );
 --> statement-breakpoint
 CREATE TABLE "grades" (
@@ -39,7 +41,8 @@ CREATE TABLE "grades" (
 	"description" text,
 	"isActive" boolean DEFAULT true NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
-	"updatedAt" timestamp DEFAULT now() NOT NULL
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "grades_title_unique" UNIQUE("title")
 );
 --> statement-breakpoint
 CREATE TABLE "metahuman_sessions" (
@@ -89,6 +92,25 @@ CREATE TABLE "quizzes" (
 	"timeLimit" integer,
 	"passingScore" double precision DEFAULT 70 NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "quizzes_subchapter_title_unique" UNIQUE("subchapterId","title")
+);
+--> statement-breakpoint
+CREATE TABLE "subchapter_materials" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"subchapterId" uuid NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"description" text,
+	"fileName" varchar(255) NOT NULL,
+	"fileUrl" text NOT NULL,
+	"fileType" varchar(50) NOT NULL,
+	"fileSize" integer,
+	"mimeType" varchar(100),
+	"thumbnailUrl" text,
+	"duration" integer,
+	"uploadedBy" uuid NOT NULL,
+	"isActive" boolean DEFAULT true NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
 	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -100,7 +122,8 @@ CREATE TABLE "subchapters" (
 	"chapterId" uuid NOT NULL,
 	"isActive" boolean DEFAULT true NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
-	"updatedAt" timestamp DEFAULT now() NOT NULL
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "subchapters_title_chapter_unique" UNIQUE("title","chapterId")
 );
 --> statement-breakpoint
 CREATE TABLE "subjects" (
@@ -110,7 +133,8 @@ CREATE TABLE "subjects" (
 	"gradeId" uuid NOT NULL,
 	"isActive" boolean DEFAULT true NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
-	"updatedAt" timestamp DEFAULT now() NOT NULL
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "subjects_title_grade_unique" UNIQUE("title","gradeId")
 );
 --> statement-breakpoint
 CREATE TABLE "user_progress" (
@@ -157,6 +181,8 @@ ALTER TABLE "quiz_attempts" ADD CONSTRAINT "quiz_attempts_userId_users_id_fk" FO
 ALTER TABLE "quiz_attempts" ADD CONSTRAINT "quiz_attempts_quizId_quizzes_id_fk" FOREIGN KEY ("quizId") REFERENCES "public"."quizzes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "quiz_questions" ADD CONSTRAINT "quiz_questions_quizId_quizzes_id_fk" FOREIGN KEY ("quizId") REFERENCES "public"."quizzes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "quizzes" ADD CONSTRAINT "quizzes_subchapterId_subchapters_id_fk" FOREIGN KEY ("subchapterId") REFERENCES "public"."subchapters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subchapter_materials" ADD CONSTRAINT "subchapter_materials_subchapterId_subchapters_id_fk" FOREIGN KEY ("subchapterId") REFERENCES "public"."subchapters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subchapter_materials" ADD CONSTRAINT "subchapter_materials_uploadedBy_users_id_fk" FOREIGN KEY ("uploadedBy") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subchapters" ADD CONSTRAINT "subchapters_chapterId_chapters_id_fk" FOREIGN KEY ("chapterId") REFERENCES "public"."chapters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subjects" ADD CONSTRAINT "subjects_gradeId_grades_id_fk" FOREIGN KEY ("gradeId") REFERENCES "public"."grades"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_progress" ADD CONSTRAINT "user_progress_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -197,6 +223,10 @@ CREATE INDEX "quizzes_title_idx" ON "quizzes" USING btree ("title");--> statemen
 CREATE INDEX "quizzes_subchapter_idx" ON "quizzes" USING btree ("subchapterId");--> statement-breakpoint
 CREATE INDEX "quizzes_active_idx" ON "quizzes" USING btree ("isActive");--> statement-breakpoint
 CREATE INDEX "quizzes_subchapter_active_idx" ON "quizzes" USING btree ("subchapterId","isActive");--> statement-breakpoint
+CREATE INDEX "materials_subchapter_idx" ON "subchapter_materials" USING btree ("subchapterId");--> statement-breakpoint
+CREATE INDEX "materials_type_idx" ON "subchapter_materials" USING btree ("fileType");--> statement-breakpoint
+CREATE INDEX "materials_active_idx" ON "subchapter_materials" USING btree ("isActive");--> statement-breakpoint
+CREATE INDEX "materials_uploaded_by_idx" ON "subchapter_materials" USING btree ("uploadedBy");--> statement-breakpoint
 CREATE INDEX "subchapters_title_idx" ON "subchapters" USING btree ("title");--> statement-breakpoint
 CREATE INDEX "subchapters_chapter_idx" ON "subchapters" USING btree ("chapterId");--> statement-breakpoint
 CREATE INDEX "subchapters_order_idx" ON "subchapters" USING btree ("order");--> statement-breakpoint

@@ -26,8 +26,129 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
-  @ApiOperation({ summary: 'Overall health check' })
-  @ApiResponse({ status: 200, description: 'Health check results' })
+  @ApiOperation({
+    summary: 'Overall health check',
+    description:
+      'Check the health status of all critical system components including database and Redis',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Health check results - all systems operational',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'ok' },
+        info: {
+          type: 'object',
+          properties: {
+            database: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'up' },
+                responseTime: { type: 'string', example: '15ms' },
+                connections: {
+                  type: 'object',
+                  properties: {
+                    active: { type: 'number', example: 5 },
+                    idle: { type: 'number', example: 10 },
+                    total: { type: 'number', example: 15 },
+                  },
+                },
+              },
+            },
+            redis: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'up' },
+                responseTime: { type: 'string', example: '8ms' },
+                testOperation: { type: 'string', example: 'passed' },
+              },
+            },
+          },
+        },
+        error: { type: 'object', example: {} },
+        details: {
+          type: 'object',
+          properties: {
+            database: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'up' },
+                responseTime: { type: 'string', example: '15ms' },
+                connections: {
+                  type: 'object',
+                  properties: {
+                    active: { type: 'number', example: 5 },
+                    idle: { type: 'number', example: 10 },
+                    total: { type: 'number', example: 15 },
+                  },
+                },
+              },
+            },
+            redis: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'up' },
+                responseTime: { type: 'string', example: '8ms' },
+                testOperation: { type: 'string', example: 'passed' },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Service unavailable - one or more components are down',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'error' },
+        info: { type: 'object', example: {} },
+        error: {
+          type: 'object',
+          properties: {
+            database: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'down' },
+                message: {
+                  type: 'string',
+                  example: 'Database connection failed',
+                },
+                error: { type: 'string', example: 'Connection timeout' },
+              },
+            },
+          },
+        },
+        details: {
+          type: 'object',
+          properties: {
+            database: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'down' },
+                message: {
+                  type: 'string',
+                  example: 'Database connection failed',
+                },
+                error: { type: 'string', example: 'Connection timeout' },
+              },
+            },
+            redis: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'up' },
+                responseTime: { type: 'string', example: '8ms' },
+                testOperation: { type: 'string', example: 'passed' },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
   check() {
     return this.health.check([
       () => this.databaseHealthCheck(),
@@ -50,8 +171,36 @@ export class HealthController {
   }
 
   @Get('live')
-  @ApiOperation({ summary: 'Liveness probe for Kubernetes' })
-  @ApiResponse({ status: 200, description: 'Service is alive' })
+  @ApiOperation({
+    summary: 'Liveness probe for Kubernetes',
+    description:
+      'Simple liveness check that returns basic system information. Used by Kubernetes to determine if the pod should be restarted.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Service is alive and responding',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'ok' },
+        timestamp: { type: 'string', example: '2024-01-01T10:00:00.000Z' },
+        uptime: { type: 'number', example: 3600.123 },
+        memory: {
+          type: 'object',
+          properties: {
+            rss: { type: 'number', example: 52428800 },
+            heapTotal: { type: 'number', example: 20971520 },
+            heapUsed: { type: 'number', example: 15728640 },
+            external: { type: 'number', example: 1048576 },
+            arrayBuffers: { type: 'number', example: 524288 },
+          },
+        },
+        version: { type: 'string', example: '1.0.0' },
+        nodeVersion: { type: 'string', example: 'v20.10.0' },
+        environment: { type: 'string', example: 'development' },
+      },
+    },
+  })
   liveness() {
     return {
       status: 'ok',

@@ -9,6 +9,9 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { TerminusModule } from '@nestjs/terminus';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseService } from '@/database/database.service';
@@ -41,6 +44,13 @@ import {
       validate,
       cache: true,
     }),
+
+    // ✅ Tambahkan ServeStaticModule
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'), // folder uploads di root project
+      serveRoot: '/uploads', // URL prefix
+    }),
+
     ThrottlerModule.forRoot([
       {
         name: 'short',
@@ -85,6 +95,7 @@ import {
     CacheService,
     RateLimitService,
     SanitizationService,
+    PasswordService,
     SecurityConfigService,
     UserEventHandler,
     {

@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 import { DatabaseService } from '@/database/database.service';
 import { UserRepository } from './repositories/user.repository';
 import { TransactionService } from '@/common/services/transaction.service';
+import { PasswordService } from '@/common/services/password.service';
 import { UserRole } from '@/types/enums';
 
 describe('AuthService Integration Tests', () => {
@@ -50,6 +51,7 @@ describe('AuthService Integration Tests', () => {
             increment: jest.fn(),
           },
         },
+        PasswordService,
       ],
     }).compile();
 

@@ -1,5 +1,5 @@
-import { IsObject } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsObject, IsOptional, IsNumber, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SubmitQuizDto {
   @ApiProperty({
@@ -12,4 +12,14 @@ export class SubmitQuizDto {
   })
   @IsObject()
   answers: Record<string, string>; // questionId -> answer
+
+  @ApiPropertyOptional({
+    description: 'Time spent on the quiz in seconds',
+    example: 1800,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  timeSpent?: number; // in seconds
 }

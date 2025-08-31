@@ -245,6 +245,77 @@ export class AuthService {
     }
   }
 
+  async logoutWithTokens(
+    accessToken: string | null,
+    refreshToken?: string,
+  ): Promise<void> {
+    let userId: string | null = null;
+
+    // Try to get user ID from access token first
+    if (accessToken) {
+      try {
+        // Try to decode the token without verification to get user ID
+        // This allows logout even with expired tokens
+        const decoded = this.jwtService.decode(accessToken) as JwtPayload;
+
+        if (decoded && decoded.sub) {
+          userId = decoded.sub;
+        } else {
+          // If we can't decode the token, try to verify it (might be valid)
+          try {
+            const verified = this.jwtService.verify(accessToken, {
+              secret: this.configService.get<string>('JWT_SECRET'),
+            }) as JwtPayload;
+
+            if (verified && verified.sub) {
+              userId = verified.sub;
+            }
+          } catch (verifyError) {
+            // Token is invalid or expired, continue to try refresh token
+            this.logger.warn(
+              `Access token invalid during logout: ${verifyError.message}`,
+            );
+          }
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Error processing access token during logout: ${error.message}`,
+        );
+      }
+    }
+
+    // If we couldn't get user ID from access token, try refresh token
+    if (!userId && refreshToken) {
+      try {
+        const user = await this.userRepository.findByRefreshToken(refreshToken);
+        if (user) {
+          userId = user.id;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Error processing refresh token during logout: ${error.message}`,
+        );
+      }
+    }
+
+    // If we have a user ID, perform logout
+    if (userId) {
+      await this.logout(userId);
+      this.logger.log(`User logged out successfully: ${userId}`);
+    } else {
+      // Even if we can't identify the user, we should succeed
+      // This handles cases where tokens are completely invalid
+      this.logger.warn(
+        'Logout attempted without valid tokens - allowing anonymous logout',
+      );
+    }
+  }
+
+  // Keep the old method for backward compatibility
+  async logoutWithToken(token: string): Promise<void> {
+    return this.logoutWithTokens(token, undefined);
+  }
+
   private async generateTokens(user: any): Promise<TokenResponseDto> {
     const accessTokenPayload: JwtPayload = {
       sub: user.id,

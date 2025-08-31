@@ -420,6 +420,7 @@ export const subchaptersRelations = relations(subchapters, ({ one, many }) => ({
   quizzes: many(quizzes),
   chatLogs: many(aiChatLogs),
   metahumanSessions: many(metahumanSessions),
+  materials: many(subchapterMaterials),
 }));
 
 export const aiGeneratedContentRelations = relations(
@@ -495,6 +496,51 @@ export const metahumanSessionsRelations = relations(
   }),
 );
 
+export const subchapterMaterials = pgTable(
+  'subchapter_materials',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    subchapterId: uuid('subchapterId')
+      .notNull()
+      .references(() => subchapters.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 255 }).notNull(),
+    description: text('description'),
+    fileName: varchar('fileName', { length: 255 }).notNull(),
+    fileUrl: text('fileUrl').notNull(),
+    fileType: varchar('fileType', { length: 50 }).notNull(), // 'video', 'pdf', 'image', 'document'
+    fileSize: integer('fileSize'),
+    mimeType: varchar('mimeType', { length: 100 }),
+    thumbnailUrl: text('thumbnailUrl'),
+    duration: integer('duration'), // for videos in seconds
+    uploadedBy: uuid('uploadedBy')
+      .notNull()
+      .references(() => users.id),
+    isActive: boolean('isActive').notNull().default(true),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => ({
+    subchapterIdx: index('materials_subchapter_idx').on(table.subchapterId),
+    typeIdx: index('materials_type_idx').on(table.fileType),
+    activeIdx: index('materials_active_idx').on(table.isActive),
+    uploadedByIdx: index('materials_uploaded_by_idx').on(table.uploadedBy),
+  }),
+);
+
+export const subchapterMaterialsRelations = relations(
+  subchapterMaterials,
+  ({ one }) => ({
+    subchapter: one(subchapters, {
+      fields: [subchapterMaterials.subchapterId],
+      references: [subchapters.id],
+    }),
+    uploadedBy: one(users, {
+      fields: [subchapterMaterials.uploadedBy],
+      references: [users.id],
+    }),
+  }),
+);
+
 // Types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -520,3 +566,5 @@ export type QuizAttempt = typeof quizAttempts.$inferSelect;
 export type NewQuizAttempt = typeof quizAttempts.$inferInsert;
 export type MetahumanSession = typeof metahumanSessions.$inferSelect;
 export type NewMetahumanSession = typeof metahumanSessions.$inferInsert;
+export type SubchapterMaterial = typeof subchapterMaterials.$inferSelect;
+export type NewSubchapterMaterial = typeof subchapterMaterials.$inferInsert;

@@ -187,10 +187,27 @@ export class PasswordService {
   }
 
   /**
-   * Verify password against hash
+   * Verify password against hash with timing attack protection
    */
   async verifyPassword(password: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(password, hash);
+    try {
+      // Always perform bcrypt comparison to prevent timing attacks
+      const isValid = await bcrypt.compare(password, hash);
+
+      // Add small random delay to prevent timing analysis
+      const delay = Math.random() * 10 + 5; // 5-15ms random delay
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      return isValid;
+    } catch (error) {
+      // If hash is invalid, still perform a dummy bcrypt operation
+      // to maintain consistent timing
+      await bcrypt.compare(
+        password,
+        '$2b$14$dummy.hash.to.prevent.timing.attacks',
+      );
+      return false;
+    }
   }
 
   /**

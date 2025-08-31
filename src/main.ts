@@ -1,3 +1,4 @@
+// main.ts
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -7,14 +8,21 @@ import { SanitizationInterceptor } from './common/interceptors/sanitization.inte
 import { CustomLoggerService } from './common/services/logger.service';
 import { SecurityConfigService } from './common/config/security.config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { useContainer } from 'class-validator';
 import compression = require('compression');
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
+
+  // Enable class-validator to use NestJS DI container
+  // This allows custom validators to inject services
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   // Get security configuration
   const securityConfig = app.get(SecurityConfigService);
@@ -65,6 +73,12 @@ async function bootstrap() {
     }),
   );
 
+  // Serve static files for uploads
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+    maxAge: '1d', // Cache for 1 day
+  });
+
   // Set global API prefix
   app.setGlobalPrefix('api');
 
@@ -88,7 +102,11 @@ async function bootstrap() {
       .addTag('Authentication', 'User authentication and authorization')
       .addTag(
         'Content Management',
-        'Manage grades, subjects, chapters, and subchapters',
+        'Manage grades, subjects, chapters, subchapters, and materials',
+      )
+      .addTag(
+        'File Upload & Materials',
+        '🚀 Upload and manage learning materials (videos, PDFs, images)',
       )
       .addTag('Quiz Management', 'Create and manage quizzes and questions')
       .addTag('AI Services', 'AI-powered content generation and chat')
@@ -114,6 +132,13 @@ async function bootstrap() {
         .swagger-ui .topbar { display: none }
         .swagger-ui .info .title { color: #3b82f6 }
       `,
+    });
+
+    // Add endpoint for Swagger JSON
+    const expressApp = app.getHttpAdapter().getInstance();
+    expressApp.get('/api-json', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(document);
     });
   }
 
